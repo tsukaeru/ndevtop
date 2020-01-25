@@ -19,6 +19,11 @@ func main() {
 	flag.UintVar(&duration, "d", DefaultDuration, "set data update `interval` in seconds")
 	flag.Parse()
 
+	if duration == 0 {
+		fmt.Fprintln(os.Stderr, "interval must be larger than 0")
+		os.Exit(1)
+	}
+
 	runewidth.DefaultCondition.EastAsianWidth = false
 
 	if err := NewApp(duration).Run(); err != nil {
