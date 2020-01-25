@@ -42,8 +42,8 @@ var dataTypeFormatters = map[string]dataTypeFormatter{
 }
 
 func BitPerSec(d *NdevData, typ string, duration time.Duration) string {
-	diff := d.Diff(typ) * 8
-	div := uint64(1)
+	diff := float64(d.Diff(typ)*8) / float64(duration/time.Second)
+	div := float64(1)
 	unit := " "
 	switch {
 	case diff >= 1000*1000*1000:
@@ -56,12 +56,12 @@ func BitPerSec(d *NdevData, typ string, duration time.Duration) string {
 		div = 1000
 		unit = "K"
 	}
-	return fmt.Sprintf("%.1f %sbps", float64(diff)/float64(duration/time.Second)/float64(div), unit)
+	return fmt.Sprintf("%.1f %sbps", diff/div, unit)
 }
 
 func PacketPerSec(d *NdevData, typ string, duration time.Duration) string {
-	diff := d.Diff(typ)
-	div := uint64(1)
+	diff := float64(d.Diff(typ)) / float64(duration/time.Second)
+	div := float64(1)
 	unit := " "
 	switch {
 	case diff >= 1000*1000*1000:
@@ -74,7 +74,7 @@ func PacketPerSec(d *NdevData, typ string, duration time.Duration) string {
 		div = 1000
 		unit = "K"
 	}
-	return fmt.Sprintf("%.1f %spps", float64(diff)/float64(duration/time.Second)/float64(div), unit)
+	return fmt.Sprintf("%.1f %spps", diff/div, unit)
 }
 
 type NdevData struct {
