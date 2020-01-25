@@ -13,7 +13,7 @@ import (
 
 const (
 	AppName         = "ndevtop"
-	DefaultDuration = 3 * time.Second
+	DefaultDuration = 3
 )
 
 type App struct {
@@ -32,7 +32,7 @@ type App struct {
 	filter   string
 }
 
-func NewApp() *App {
+func NewApp(d uint) *App {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	a := &App{
@@ -40,7 +40,7 @@ func NewApp() *App {
 		err:      make(chan error, 1),
 		ctx:      ctx,
 		cancel:   cancel,
-		duration: DefaultDuration,
+		duration: time.Duration(d) * time.Second,
 		app:      tview.NewApplication(),
 		flex:     tview.NewFlex().SetDirection(tview.FlexRow),
 		header:   tview.NewTextView().SetTextColor(tcell.ColorDefault).SetDynamicColors(true),

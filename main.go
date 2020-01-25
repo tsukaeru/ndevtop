@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -14,9 +15,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	var duration uint
+	flag.UintVar(&duration, "d", DefaultDuration, "set data update `interval` in seconds")
+	flag.Parse()
+
 	runewidth.DefaultCondition.EastAsianWidth = false
 
-	if err := NewApp().Run(); err != nil {
+	if err := NewApp(duration).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
