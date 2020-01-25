@@ -72,7 +72,7 @@ func (a *App) getDuration() {
 		switch key {
 		case tcell.KeyEnter:
 			txt := a.field.GetText()
-			d, err := strconv.ParseInt(txt, 10, 64)
+			d, err := strconv.ParseUint(txt, 10, 64)
 			if err != nil {
 				return
 			}
