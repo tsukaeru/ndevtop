@@ -76,6 +76,9 @@ func (a *App) getDuration() {
 			if err != nil {
 				return
 			}
+			if d == 0 {
+				return
+			}
 			a.duration = time.Duration(d) * time.Second
 		}
 		a.field.SetLabel("").SetText("")
