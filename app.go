@@ -14,6 +14,7 @@ import (
 const (
 	AppName         = "ndevtop"
 	DefaultDuration = 3
+	MessageDuration = 5 * time.Second
 )
 
 type App struct {
@@ -62,9 +63,14 @@ func (a *App) clean() {
 	close(a.err)
 }
 
+func (a *App) resetField() {
+	a.field.SetLabel("").SetText("").SetFieldBackgroundColor(tcell.ColorDefault).SetFieldWidth(0)
+}
+
 func (a *App) getDuration() {
 	a.wg.Add(1)
 
+	a.resetField()
 	a.field.SetLabel("set interval (secs): ").SetAcceptanceFunc(tview.InputFieldInteger).SetText("")
 	a.field.SetDoneFunc(func(key tcell.Key) {
 		defer a.wg.Done()
@@ -74,9 +80,11 @@ func (a *App) getDuration() {
 			txt := a.field.GetText()
 			d, err := strconv.ParseUint(txt, 10, 64)
 			if err != nil {
+				a.err <- err
 				return
 			}
 			if d == 0 {
+				a.err <- fmt.Errorf("interval must be larger than 0")
 				return
 			}
 			a.duration = time.Duration(d) * time.Second
@@ -96,6 +104,7 @@ func (a *App) getDuration() {
 func (a *App) getFilter() {
 	a.wg.Add(1)
 
+	a.resetField()
 	a.field.SetLabel("set name filter: ").SetAcceptanceFunc(tview.InputFieldMaxLength(15)).SetText("")
 	a.field.SetDoneFunc(func(key tcell.Key) {
 		defer a.wg.Done()
@@ -125,8 +134,21 @@ func (a *App) updateHeader() {
 	a.header.SetText(s)
 }
 
+func (a *App) setErrorMessage(err error) (after time.Time) {
+	msg := err.Error()
+	a.field.SetLabel("").SetText(msg).SetFieldWidth(len(msg)).SetFieldBackgroundColor(tcell.ColorRed)
+	return time.Now().Add(MessageDuration)
+}
+
+func (a *App) clearMessage(after time.Time) {
+	if time.Now().After(after) {
+		a.resetField()
+	}
+}
+
 func (a *App) updateTable() {
 	if err := a.stat.CollectData(); err != nil {
+		a.err <- err
 		return
 	}
 	a.stat.Sort()
@@ -167,8 +189,12 @@ func (a *App) watch() {
 		}
 	}()
 
+	var messageClearAfter time.Time
 	for {
 		select {
+		case err := <-a.err:
+			messageClearAfter = a.setErrorMessage(err)
+			a.app.Draw()
 		case <-a.ctx.Done():
 			return
 		case ev := <-a.ev:
@@ -215,6 +241,7 @@ func (a *App) watch() {
 
 			timer.Reset(a.duration)
 		case <-timer.C:
+			a.clearMessage(messageClearAfter)
 			a.updateHeader()
 			a.updateTable()
 			a.app.Draw()
